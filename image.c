@@ -1,6 +1,38 @@
 #include <gtk/gtk.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+
+static GdkPixbuf *rotate_pixbuf(GdkPixbuf *src, double angle_degrees) {
+    double angle = angle_degrees * G_PI / 180.0;
+    int w = gdk_pixbuf_get_width(src);
+    int h = gdk_pixbuf_get_height(src);
+
+    double sin_a = fabs(sin(angle));
+    double cos_a = fabs(cos(angle));
+    int new_w = ceil(w * cos_a + h * sin_a);
+    int new_h = ceil(h * cos_a + w * sin_a);
+
+    cairo_surface_t *surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, new_w, new_h);
+    cairo_t *cr = cairo_create(surface);
+
+    cairo_translate(cr, new_w / 2.0, new_h / 2.0);
+    cairo_rotate(cr, angle);
+    cairo_translate(cr, -w / 2.0, -h / 2.0);
+
+    gdk_cairo_set_source_pixbuf(cr, src, 0, 0);
+    cairo_paint(cr);
+
+    GdkPixbuf *rotated = gdk_pixbuf_get_from_surface(surface, 0, 0, new_w, new_h);
+
+    cairo_destroy(cr);
+    cairo_surface_destroy(surface);
+
+    return rotated;
+}
+
+
 
 int main(int argc, char *argv[])
 {
@@ -46,10 +78,7 @@ int main(int argc, char *argv[])
 	}
 	if (argc > 3)
 	{
-		for (int i = 0 ; i < atoi(argv[3]) ; i++)
-		{
-			pixbuf = gdk_pixbuf_rotate_simple(pixbuf,GDK_PIXBUF_ROTATE_COUNTERCLOCKWISE);
-		}
+		pixbuf = rotate_pixbuf(pixbuf,atof(argv[3]));
 	}
 
 	if (!gdk_pixbuf_save(pixbuf, argv[2],"png", &error, NULL))
