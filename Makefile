@@ -1,14 +1,14 @@
 CC := gcc
-CFLAGS := -Wall -Wextra -g
-TARGET := solver
-SRC := main.c .c .c
+CFLAGS := -Wall -Wextra -g -lm
+TARGET := solver nn image
+SRC := main.c solver.c image.c nn.c 
 
 $(TARGET): $(SRC)
   $(CC) $(CFLAGS) -o $@ $(SRC)
 
-.PHONY: all clean
+.PHONY: all clean 
 
-all: solver
+all: $(TARGET)
 
 clean:
   rm -f $(TARGET)
