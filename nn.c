@@ -119,18 +119,23 @@ void backward(struct NeuralNetwork *nn, int A, int B, double f, int e)
 		hidden_delta[i] = end_delta 
 				* nn -> output_w[i]
 				* sigmoid_prime(nn -> hidden_z[i]);
-		nn -> output_w[i] += nn -> learning_rate 
+
+
+		nn -> output_w[i] = nn -> learning_rate 
 				* end_delta
 				* nn -> hidden_res[i];
-		nn -> input_w[0][i] += nn -> learning_rate
+		
+
+
+		nn -> input_w[0][i] = nn -> learning_rate
 			* hidden_delta[i] * (double)A;
-		nn -> input_w[1][i] += nn -> learning_rate
+		nn -> input_w[1][i] = nn -> learning_rate
 			* hidden_delta[i] * (double)B;
-		nn -> hidden_b[i] += nn -> learning_rate
+		nn -> hidden_b[i] = nn -> learning_rate
 			* hidden_delta[i];
 	}
 	
-	nn -> end_b += nn -> learning_rate * end_delta;
+	nn -> end_b = nn -> learning_rate * end_delta;
 	
 	free(hidden_delta);
 }
@@ -154,14 +159,14 @@ void train(struct NeuralNetwork *nn, int loop)
 int main(int argc, char *argv[])
 {
 	srand(time(NULL));
-	struct NeuralNetwork NN = init_NN(3, 0.1);
+	struct NeuralNetwork NN = init_NN(2, 0.5);
 	if (argc == 4) train(&NN, atoi(argv[3]));
 	double res = forward(&NN, atoi(argv[1]), atoi(argv[2]));
 	printf("forward((A=%i), (B=%i)) = %f ≈ %i",
 			atoi(argv[1]),
 			atoi(argv[2]),
 			res,
-			res <= 0.5
+			res > 0.5
 			);
 	free_NN(&NN);
 }
