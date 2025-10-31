@@ -153,4 +153,3 @@ int main()
     detect_and_cut("grid_test1.png", 12, 12);
     return 0;
 }
-
