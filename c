@@ -1,0 +1,14 @@
+AUTHORS
+detection.c
+detection.h
+Grid_test1.png
+grid.txt
+image
+image.c
+Makefile
+nn
+README.md
+solver
+solver.c
+stb_image.h
+tibo.c
