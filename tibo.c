@@ -32,7 +32,7 @@ struct NeuralNetwork
 {
 	int n; //hidden len
 	
-    double **input_w;
+	double **input_w;
 	double *output_w;
 	
 	double *hidden_b;
@@ -46,7 +46,7 @@ struct NeuralNetwork
 	double learning_rate;
 };
 
-struct NeuralNetwork init_NN(int n)
+struct NeuralNetwork init_NN(int n, double learning_rate)
 {
 	struct NeuralNetwork res;
 	
@@ -64,7 +64,7 @@ struct NeuralNetwork init_NN(int n)
 	
 	res.end_b = random_d();
 	
-	res.learning_rate = 0.1;
+	res.learning_rate = learning_rate;
 	
 	for (int i = 0 ; i < res.n; i++)
 	{
@@ -92,8 +92,8 @@ int forward(struct NeuralNetwork *nn, int A, int B)
 	while (i < nn -> n)
 	{
 		nn -> hidden_z[i] = nn -> input_w[0][i] * (double)A
-						+ nn -> input_w[1][i] * (double)B
-						+ nn -> hidden_b[i];
+			+ nn -> input_w[1][i] * (double)B
+			+ nn -> hidden_b[i];
 		i++;
 	}
 	i = 0;
@@ -111,7 +111,8 @@ int forward(struct NeuralNetwork *nn, int A, int B)
 
 void backward(struct NeuralNetwork *nn, int A, int B, int f, int e)
 {
-	double end_delta = ((double)e - (double)f) * sigmoid_prime(nn -> end_z);
+	double end_delta = ((double)e - (double)f)
+		* sigmoid_prime(nn -> end_z);
 	double *hidden_delta = calloc(nn -> n, sizeof(double));
 	for (int i = 0 ; i < nn -> n; i++)
 	{
@@ -121,9 +122,12 @@ void backward(struct NeuralNetwork *nn, int A, int B, int f, int e)
 		nn -> output_w[i] += nn -> learning_rate 
 				* end_delta
 				* nn -> hidden_res[i];
-		nn -> input_w[0][i] += nn -> learning_rate * hidden_delta[i] * (double)A;
-		nn -> input_w[1][i] += nn -> learning_rate * hidden_delta[i] * (double)B;
-		nn -> hidden_b[i] += nn -> learning_rate * hidden_delta[i];
+		nn -> input_w[0][i] += nn -> learning_rate
+			* hidden_delta[i] * (double)A;
+		nn -> input_w[1][i] += nn -> learning_rate
+			* hidden_delta[i] * (double)B;
+		nn -> hidden_b[i] += nn -> learning_rate
+			* hidden_delta[i];
 	}
 	
 	nn -> end_b += nn -> learning_rate * end_delta;
