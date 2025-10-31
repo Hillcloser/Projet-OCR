@@ -131,7 +131,7 @@ void backward(struct NeuralNetwork *nn, int A, int B, int f, int e)
 	free(hidden_delta);
 }
 
-void train(struct NeuralNetwork *nn, int A, int B, int loop)
+void train(struct NeuralNetwork *nn, int loop)
 {
 	int tmp;
 	for (int i = 0 ; i < loop; i++)
@@ -151,7 +151,7 @@ int main(int argc, char *argv[])
 {
 	srand(time(NULL));
 	struct NeuralNetwork NN = init_NN(3);
-	if (argc == 4) train(&NN, atoi(argv[1]), atoi(argv[2]), atoi(argv[3]));
+	if (argc == 4) train(&NN, atoi(argv[3]));
 	printf("forward((A=%i), (B=%i)) = %i",
 			atoi(argv[1]),
 			atoi(argv[2]),
