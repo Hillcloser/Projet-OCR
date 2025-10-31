@@ -121,28 +121,28 @@ void backward(struct NeuralNetwork *nn, int A, int B, double f, int e)
 				* sigmoid_prime(nn -> hidden_z[i]);
 
 
-		nn -> output_w[i] = nn -> learning_rate 
+		nn -> output_w[i] -= nn -> learning_rate 
 				* end_delta
 				* nn -> hidden_res[i];
 		
 
 
-		nn -> input_w[0][i] = nn -> learning_rate
+		nn -> input_w[0][i] -= nn -> learning_rate
 			* hidden_delta[i] * (double)A;
-		nn -> input_w[1][i] = nn -> learning_rate
+		nn -> input_w[1][i] -= nn -> learning_rate
 			* hidden_delta[i] * (double)B;
-		nn -> hidden_b[i] = nn -> learning_rate
+		nn -> hidden_b[i] -= nn -> learning_rate
 			* hidden_delta[i];
 	}
 	
-	nn -> end_b = nn -> learning_rate * end_delta;
+	nn -> end_b -= nn -> learning_rate * end_delta;
 	
 	free(hidden_delta);
 }
 
 void train(struct NeuralNetwork *nn, int loop)
 {
-	int tmp;
+	double tmp;
 	for (int i = 0 ; i < loop; i++)
 	{
 		tmp = forward(nn, 0, 0);
