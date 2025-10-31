@@ -86,7 +86,7 @@ void free_NN(struct NeuralNetwork *nn)
 	free(nn -> hidden_res);
 }
 
-int forward(struct NeuralNetwork *nn, int A, int B)
+double forward(struct NeuralNetwork *nn, int A, int B)
 {
 	int i = 0;
 	while (i < nn -> n)
@@ -106,12 +106,12 @@ int forward(struct NeuralNetwork *nn, int A, int B)
 	}
 	nn -> end_res = sigmoid(nn -> end_z);
 	
-	return (int)nn -> end_res;
+	return nn -> end_res;
 }
 
-void backward(struct NeuralNetwork *nn, int A, int B, int f, int e)
+void backward(struct NeuralNetwork *nn, int A, int B, double f, int e)
 {
-	double end_delta = ((double)e - (double)f)
+	double end_delta = ((double)e - f)
 		* sigmoid_prime(nn -> end_z);
 	double *hidden_delta = calloc(nn -> n, sizeof(double));
 	for (int i = 0 ; i < nn -> n; i++)
@@ -154,12 +154,14 @@ void train(struct NeuralNetwork *nn, int loop)
 int main(int argc, char *argv[])
 {
 	srand(time(NULL));
-	struct NeuralNetwork NN = init_NN(3);
+	struct NeuralNetwork NN = init_NN(3, 0.1);
 	if (argc == 4) train(&NN, atoi(argv[3]));
-	printf("forward((A=%i), (B=%i)) = %i",
+	double res = forward(&NN, atoi(argv[1]), atoi(argv[2]));
+	printf("forward((A=%i), (B=%i)) = %f ≈ %i",
 			atoi(argv[1]),
 			atoi(argv[2]),
-			forward(&NN, atoi(argv[1]), atoi(argv[2]))
+			res,
+			res <= 0.5
 			);
 	free_NN(&NN);
 }
