@@ -1,7 +1,7 @@
 CC := gcc
-CFLAGS := -Wall -Wextra -g `pkg-config --cflags --libs gtk+-3.0` -lm
+CFLAGS := -Wall -Wextra -Iinclude -g `pkg-config --cflags --libs gtk+-3.0` -lm
 TARGET := detection image nn solver 
-SRC := detection.c  image.c nn.c solver.c
+SRC := src/detection.c  src/image.c src/nn.c src/solver.c
 
 .PHONY: all clean 
 
@@ -9,11 +9,11 @@ all: $(TARGET)
 
 clean:
 	rm -f $(TARGET)
-detection: detection.c
-	$(CC) $(CFLAGS) -o $@ detection.c
-image: image.c
-	$(CC) $(CFLAGS) -o $@ image.c
-solver: solver.c
-	$(CC) $(CFLAGS) -o $@ solver.c
-nn: nn.c
-	$(CC) $(CFLAGS) -o $@ nn.c
+detection: src/detection.c
+	$(CC) $(CFLAGS) -o $@ src/detection.c
+image: src/image.c
+	$(CC) $(CFLAGS) -o $@ src/image.c
+solver: src/solver.c
+	$(CC) $(CFLAGS) -o $@ src/solver.c
+nn: src/nn.c
+	$(CC) $(CFLAGS) -o $@ src/nn.c
