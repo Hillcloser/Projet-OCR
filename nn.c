@@ -216,7 +216,7 @@ int main(int argc, char *argv[])
 	}
 	else
 	{
-		printf("🚫")
+		printf("🚫");
 	}
 	free_NN(&NN);
 }
