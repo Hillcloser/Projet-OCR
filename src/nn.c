@@ -159,33 +159,33 @@ void train(struct NeuralNetwork *nn, int loop)
 int main(int argc, char *argv[])
 {
 	srand(time(NULL));
-	struct NeuralNetwork NN = init_NN(2, 0.5);
+	struct NeuralNetwork NN = init_NN(3, 0.1);
 	if (argc == 1) 
 	{
 		train(&NN, 100000);
 		double res = forward(&NN, 0, 0);
-		printf("forward((A=%i), (B=%i)) = %f ≈ %i",
+		printf("forward((A=%i), (B=%i)) = %f ≈ %i\n",
 			0,
 			0,
 			res,
 			res > 0.5
 			);
 		res = forward(&NN, 0, 1);
-		printf("forward((A=%i), (B=%i)) = %f ≈ %i",
+		printf("forward((A=%i), (B=%i)) = %f ≈ %i\n",
 			0,
 			1,
 			res,
 			res > 0.5
 			);
 		res = forward(&NN, 1, 0);
-		printf("forward((A=%i), (B=%i)) = %f ≈ %i",
+		printf("forward((A=%i), (B=%i)) = %f ≈ %i\n",
 			1,
 			0,
 			res,
 			res > 0.5
 			);
 		res = forward(&NN, 1, 1);
-		printf("forward((A=%i), (B=%i)) = %f ≈ %i",
+		printf("forward((A=%i), (B=%i)) = %f ≈ %i\n",
 			1,
 			1,
 			res,
@@ -196,7 +196,7 @@ int main(int argc, char *argv[])
 	{
 		train(&NN, 100000);
 		double res = forward(&NN, atoi(argv[1]), atoi(argv[2]));
-		printf("forward((A=%i), (B=%i)) = %f ≈ %i",
+		printf("forward((A=%i), (B=%i)) = %f ≈ %i\n",
 				atoi(argv[1]),
 				atoi(argv[2]),
 				res,
@@ -207,7 +207,7 @@ int main(int argc, char *argv[])
 	{
 		train(&NN, atoi(argv[3]));
 		double res = forward(&NN, atoi(argv[1]), atoi(argv[2]));
-		printf("forward((A=%i), (B=%i)) = %f ≈ %i",
+		printf("forward((A=%i), (B=%i)) = %f ≈ %i\n",
 				atoi(argv[1]),
 				atoi(argv[2]),
 				res,
