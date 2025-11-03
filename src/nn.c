@@ -220,3 +220,31 @@ int main(int argc, char *argv[])
 	}
 	free_NN(&NN);
 }
+
+/*
+int main(int argc, char *argv[])
+{
+	srand(time(NULL));
+	struct NeuralNetwork NN = init_NN(3, 0.1);
+	double res;
+	int rr = 1;
+	train(&NN, 100000);
+	for (int i = 0 ; i < 100000000000; i++)
+	{
+	    res = forward(&NN, 0, 0);
+	    rr = rr && (1 == (res > 0.5));
+	    printf("%i",(res > 0.5));
+	    res = forward(&NN, 0, 1);
+		rr = rr && (0 == (res > 0.5));
+		printf("%i",(res > 0.5));
+		res = forward(&NN, 1, 0);
+		rr = rr && (0 == (res > 0.5));
+		printf("%i",(res > 0.5));
+		res = forward(&NN, 1, 1);
+		rr = rr && (1 == (res > 0.5));
+		printf("%i\n",(res > 0.5));
+	}
+	printf("\n%i",rr);
+	free_NN(&NN);
+}
+*/
