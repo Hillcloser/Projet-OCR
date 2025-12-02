@@ -288,9 +288,9 @@ int main(int argc, char **argv)
 
     // 7. Saving and free
     g_print("\nSaving image words...\n");
-    //mkdir("Words", 0777); //save les mots dans le dossier
+    mkdir("Words", 0777); //save les mots dans le dossier
     // MANQUE : couper les mots en lettres dans leur fichier
-    g_list_foreach(word_images, save_pixbuf, "mot");
+    g_list_foreach(word_images, save_pixbuf, "Words/mot");
 
     g_free(v_proj);
     g_free(list_h_proj);
