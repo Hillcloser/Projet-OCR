@@ -7,9 +7,10 @@ SRC := src/detection.c  src/image.c src/nn.c src/solver.c
 
 all: $(TARGET)
 
-build/clean:
-	rm -f $(TARGET)
+clean:
+	rm -rf build/
 build/detection: src/detection.c
+	mkdir build/
 	$(CC) $(CFLAGS) -o $@ src/detection.c
 build/image: src/image.c
 	$(CC) $(CFLAGS) -o $@ src/image.c
