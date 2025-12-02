@@ -1,7 +1,7 @@
 CC := gcc
 CFLAGS := -Wall -Wextra -Iinclude -g `pkg-config --cflags --libs gtk+-3.0` -lm
-TARGET := build/detection build/image build/nn build/solver 
-SRC := src/detection.c  src/image.c src/nn.c src/solver.c
+TARGET := build/detection build/image build/nn build/solver buid/detect_cut
+SRC := src/detection.c  src/image.c src/nn.c src/solver.c src/detect_cut.c
 
 .PHONY: all clean 
 
@@ -12,6 +12,8 @@ clean:
 build/detection: src/detection.c
 	mkdir build/
 	$(CC) $(CFLAGS) -o $@ src/detection.c
+build/detect_cut: src/detect_cut.c
+	$(CC) $(CFLAGS) -o $@ src/detect_cut.c
 build/image: src/image.c
 	$(CC) $(CFLAGS) -o $@ src/image.c
 build/solver: src/solver.c
