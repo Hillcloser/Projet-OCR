@@ -128,17 +128,17 @@ char forward(struct NeuralNetwork *nn, int *pixel) //return for backward in NN
 void backward(struct NeuralNetwork *nn, int *pixel, int *e) //
 {
 	double *end_delta = calloc(26, sizeof(double));
-	double **hidden_delta = calloc(nn->n, sizeof(double));
+	double *hidden_delta = calloc(nn->n, sizeof(double));
 	
 	for (int e_i = 0 ; e_i < 26; e_i++)
-		end_delta[e_i] = softmax_B(nn->end_res[e_i], e[e_i]));
+		end_delta[e_i] = softmax_B(nn->end_res[e_i], e[e_i]);
 	for (int e_i = 0 ; e_i < 26; e_i++)
-		nn -> end_b[h_i] += nn -> learning_rate * end_delta[h_i];
+		nn -> end_b[e_i] += nn -> learning_rate * end_delta[e_i];
 	for (int h_i = 0 ; h_i < nn -> n; h_i++) for (int e_i = 0 ; e_i < 26; e_i++)  
-		nn -> output_w[h_i][e_i] += nn -> learning_rate * end_delta * nn -> hidden_res[h_i];
+		nn -> output_w[h_i][e_i] += nn -> learning_rate * end_delta[e_i] * nn -> hidden_res[h_i];
 	
-	for (int h_i = 0 ; h_i < nn -> n; h_i++)
-		hidden_delta[h_i] = end_delta * nn -> output_w[h_i] * sigmoid_prime(nn -> hidden_z[h_i]);
+	for (int e_i = 0 ; e_i < 26; e_i++) for (int h_i = 0 ; h_i < nn -> n; h_i++)
+		hidden_delta[h_i] += end_delta[e_i] * nn -> output_w[h_i][e_i] * sigmoid_prime(nn -> hidden_z[h_i]);
 	for (int h_i = 0 ; h_i < nn -> n; h_i++) 
 		nn -> hidden_b[h_i] += nn -> learning_rate * hidden_delta[h_i];
 	for (int p_i = 0 ; p_i < 784; p_i++) for (int h_i = 0 ; h_i < nn -> n; h_i++) 
@@ -147,7 +147,7 @@ void backward(struct NeuralNetwork *nn, int *pixel, int *e) //
 	free(end_delta);
 	free(hidden_delta);
 }
-
+/*
 void train(struct NeuralNetwork *nn, int loop) //
 {
 	int *abc = calloc(26, sizeof(int));
@@ -215,12 +215,12 @@ int main(int argc, char *argv[]) //
 	free_NN(&NN);
 }
 
+*/
 
-
-
-
-
-
+int main()
+{
+	return 0;
+}
 
 
 
