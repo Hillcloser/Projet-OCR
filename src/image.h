@@ -11,5 +11,5 @@ void grayscale_image(GdkPixbuf *pixbuf);
 void binarize_image_otsu(GdkPixbuf *pixbuf);
 double detect_skew_angle(GdkPixbuf *pixbuf);
 GdkPixbuf *rotate_pixbuf(GdkPixbuf *src, double angle);
-
+void save_pixbuf(GdkPixbuf *pixbuf, const char *filename);
 #endif

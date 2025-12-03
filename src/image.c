@@ -12,6 +12,40 @@
 /* ============================================================
    OUTILS DE BASE
    ============================================================ */
+
+
+
+
+
+
+
+
+
+void save_pixbuf(GdkPixbuf *pixbuf, const char *filename)
+{
+    GError *error = NULL;
+    // On force le format "png". Le dernier paramètre doit être NULL.
+    if (!gdk_pixbuf_save(pixbuf, filename, "png", &error, NULL)) {
+        fprintf(stderr, "Erreur lors de la sauvegarde : %s\n", error->message);
+        g_error_free(error);
+    } else {
+        printf("Image sauvegardée avec succès : %s\n", filename);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 static inline guchar clamp_val(double v) {
     if (v < 0) return 0;
     if (v > 255) return 255;
