@@ -1,22 +1,25 @@
 CC := gcc
 CFLAGS := -Wall -Wextra -Iinclude -g `pkg-config --cflags --libs gtk+-3.0` -lm
-TARGET := build/detection build/image build/nn build/solver buid/detect_cut
-SRC := src/detection.c  src/image.c src/nn.c src/solver.c src/detect_cut.c
+TARGET := build/ocr build/test
+SRC := src/detect_cut.c src/ src/image.h src/solver.c src/detection.c src/image.c src/nn.c
 
-.PHONY: all clean 
+.PHONY: all clean ocr test
+	
+ocr: $(SRC) src/graphic_interface.c
+	mkdir build/
+	$(CC) $(CFLAGS) -o build/$@ $(SRC) src/graphic_interface.c
+	./build/ocr
+	
+test: $(SRC) src/test.c
+	mkdir build/
+	$(CC) $(CFLAGS) -o build/$@ $(SRC) src/test.c
+	./build/test
 
-all: $(TARGET)
-
+all: 
+	mkdir build/
+	$(CC) $(CFLAGS) -o $@ $(SRC) graphic_interface.c
+	$(CC) $(CFLAGS) -o $@ $(SRC) test.c
+	echo $(TARGET)
+	
 clean:
 	rm -rf build/
-build/detection: src/detection.c
-	mkdir build/
-	$(CC) $(CFLAGS) -o $@ src/detection.c
-build/detect_cut: src/detect_cut.c
-	$(CC) $(CFLAGS) -o $@ src/detect_cut.c
-build/image: src/image.c
-	$(CC) $(CFLAGS) -o $@ src/image.c
-build/solver: src/solver.c
-	$(CC) $(CFLAGS) -o $@ src/solver.c
-build/nn: src/nn.c
-	$(CC) $(CFLAGS) -o $@ src/nn.c

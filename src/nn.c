@@ -65,6 +65,7 @@ struct NeuralNetwork init_NN(int n, double learning_rate)
 	//[e_i]
 	res.end_b = calloc(26, sizeof(double));
 	res.end_z = calloc(26, sizeof(double));
+	res.end_res = calloc(26, sizeof(double));
 	
 	res.learning_rate = learning_rate;
 	/////
@@ -73,8 +74,8 @@ struct NeuralNetwork init_NN(int n, double learning_rate)
 	for (int h_i = 0 ; h_i < res.n; h_i++) res.hidden_b[h_i] = random_d(); 
 	for (int e_i = 0; e_i < 26 ; e_i++) res.end_b[e_i] = random_d(); 
 	
-	for (int p_i = 0; p_i < 784 ; p_i++) for (int h_i = 0 ; h_i < res.n; h_i++) res.output_w[p_i][h_i] = random_d();
-	for (int h_i = 0 ; h_i < res.n; h_i++) for (int e_i = 0; e_i < 26 ; e_i++) res.input_w[h_i][e_i] = random_d();
+	for (int p_i = 0; p_i < 784 ; p_i++) for (int h_i = 0 ; h_i < res.n; h_i++) res.input_w[p_i][h_i] = random_d();
+	for (int h_i = 0 ; h_i < res.n; h_i++) for (int e_i = 0; e_i < 26 ; e_i++) res.output_w[h_i][e_i] = random_d();
 	/////
 	
 	return res;
@@ -83,10 +84,10 @@ struct NeuralNetwork init_NN(int n, double learning_rate)
 void free_NN(struct NeuralNetwork *nn)
 {
 						
-	for (int h_i = 0 ; h_i < nn->n; h_i++) free(nn->input_w[h_i]);
+	for (int p_i = 0; p_i < 26 ; p_i++) free(nn->input_w[p_i]);
 	free(nn->input_w);
 	
-	for (int e_i = 0; e_i < 26 ; e_i++) free(nn->output_w[e_i]);
+	for (int h_i = 0 ; h_i < nn->n; h_i++) free(nn->output_w[h_i]);
 	free(nn->output_w);
 	
 	free(nn->hidden_b);
@@ -132,13 +133,16 @@ void backward(struct NeuralNetwork *nn, int *pixel, int *e) //
 	
 	for (int e_i = 0 ; e_i < 26; e_i++)
 		end_delta[e_i] = softmax_B(nn->end_res[e_i], e[e_i]);
+	for (int e_i = 0 ; e_i < 26; e_i++) for (int h_i = 0 ; h_i < nn -> n; h_i++)
+		hidden_delta[h_i] += end_delta[e_i] * nn -> output_w[h_i][e_i] * sigmoid_prime(nn -> hidden_z[h_i]);
+	
+	
 	for (int e_i = 0 ; e_i < 26; e_i++)
 		nn -> end_b[e_i] += nn -> learning_rate * end_delta[e_i];
 	for (int h_i = 0 ; h_i < nn -> n; h_i++) for (int e_i = 0 ; e_i < 26; e_i++)  
 		nn -> output_w[h_i][e_i] += nn -> learning_rate * end_delta[e_i] * nn -> hidden_res[h_i];
 	
-	for (int e_i = 0 ; e_i < 26; e_i++) for (int h_i = 0 ; h_i < nn -> n; h_i++)
-		hidden_delta[h_i] += end_delta[e_i] * nn -> output_w[h_i][e_i] * sigmoid_prime(nn -> hidden_z[h_i]);
+
 	for (int h_i = 0 ; h_i < nn -> n; h_i++) 
 		nn -> hidden_b[h_i] += nn -> learning_rate * hidden_delta[h_i];
 	for (int p_i = 0 ; p_i < 784; p_i++) for (int h_i = 0 ; h_i < nn -> n; h_i++) 
