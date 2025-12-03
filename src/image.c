@@ -13,6 +13,96 @@
    OUTILS DE BASE
    ============================================================ */
 
+
+
+
+
+// Structure simple pour la pile (évite la récursion profonde qui ferait crasher)
+typedef struct { int x, y; } Point;
+
+
+
+
+
+
+
+
+
+
+
+// Fonction de nettoyage des petites taches (Despeckle)
+void remove_small_noise(GdkPixbuf *pixbuf, int min_size) {
+    int w = gdk_pixbuf_get_width(pixbuf);
+    int h = gdk_pixbuf_get_height(pixbuf);
+    int rs = gdk_pixbuf_get_rowstride(pixbuf);
+    int ch = gdk_pixbuf_get_n_channels(pixbuf);
+    guchar *pixels = gdk_pixbuf_get_pixels(pixbuf);
+
+    // Tableau pour marquer les pixels visités (0 = non vu, 1 = vu)
+    int *visited = calloc(w * h, sizeof(int));
+    
+    // Pile pour le Flood Fill (taille max estimée pour une tache de bruit)
+    // On suppose que le bruit ne fait pas plus de min_size * 10 pixels
+    Point *stack = malloc(sizeof(Point) * w * h); 
+    int stack_top = 0;
+
+    // Tableau temporaire pour stocker les coordonnées du blob courant
+    Point *current_blob = malloc(sizeof(Point) * w * h);
+
+    for (int y = 0; y < h; y++) {
+        for (int x = 0; x < w; x++) {
+            // Si pixel noir et pas encore visité
+            if (!visited[y * w + x] && pixels[y * rs + x * ch] < 128) {
+                
+                int blob_size = 0;
+                
+                // Init Flood Fill
+                stack_top = 0;
+                stack[stack_top++] = (Point){x, y};
+                visited[y * w + x] = 1;
+                
+                while (stack_top > 0) {
+                    Point p = stack[--stack_top];
+                    
+                    // On enregistre ce pixel comme faisant partie du blob
+                    current_blob[blob_size++] = p;
+
+                    // Voisins (4-connexité)
+                    int dx[] = {1, -1, 0, 0};
+                    int dy[] = {0, 0, 1, -1};
+
+                    for (int i = 0; i < 4; i++) {
+                        int nx = p.x + dx[i];
+                        int ny = p.y + dy[i];
+
+                        if (nx >= 0 && nx < w && ny >= 0 && ny < h) {
+                            if (!visited[ny * w + nx] && pixels[ny * rs + nx * ch] < 128) {
+                                visited[ny * w + nx] = 1;
+                                stack[stack_top++] = (Point){nx, ny};
+                            }
+                        }
+                    }
+                }
+
+                // VERDICT : Si le blob est trop petit (bruit), on l'efface
+                if (blob_size < min_size) {
+                    for (int i = 0; i < blob_size; i++) {
+                        Point p = current_blob[i];
+                        guchar *target = pixels + p.y * rs + p.x * ch;
+                        target[0] = target[1] = target[2] = 255; // Blanc
+                    }
+                }
+            }
+        }
+    }
+
+    free(visited);
+    free(stack);
+    free(current_blob);
+}
+
+
+
 void save_pixbuf(GdkPixbuf *pixbuf, const char *filename)
 {
     GError *error = NULL;
@@ -24,6 +114,20 @@ void save_pixbuf(GdkPixbuf *pixbuf, const char *filename)
         printf("Image sauvegardée avec succès : %s\n", filename);
     }
 }
+
+
+
+
+
+
+// Tri simple pour trouver la médiane
+static int compare_ints(const void *a, const void *b) {
+    return (*(int*)a - *(int*)b);
+}
+
+
+
+
 
 static inline guchar clamp_val(double v) {
     if (v < 0) return 0;
@@ -122,6 +226,7 @@ void binarize_image_otsu(GdkPixbuf *pixbuf) {
             threshold = t;
         }
     }
+     
 
     for (int y = 0; y < h; y++) {
         guchar *row = pixels + y * rs;
@@ -266,9 +371,15 @@ GdkPixbuf *pretraitement_image(GdkPixbuf *src)
         rotated = gdk_pixbuf_copy(src);
     }
 
-    grayscale_image(rotated);
+ 
+   grayscale_image(rotated);
+
+
     enhance_contrast(rotated);
     binarize_image_otsu(rotated);
 
+
+
+    remove_small_noise(rotated,20);
     return rotated;
 }
