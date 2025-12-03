@@ -1,4 +1,4 @@
-#include <gtk/gtk.h>
+﻿#include <gtk/gtk.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -167,6 +167,135 @@ static void save_pixbuf(gpointer data, gpointer user_data)
 }
 
 
+static int
+grid_lines(int *proj, int length,
+                                int min_dist, double ratio,
+                                int *lines, int max_lines)
+{
+    int max_val = 0;
+    for (int i = 0; i < length; i++) {
+        if (proj[i] > max_val)
+            max_val = proj[i];
+    }
+
+    if (max_val == 0)
+        return 0;
+
+    int threshold = (int)(max_val * ratio);
+    int count = 0;
+    int last = -min_dist;
+
+    for (int i = 0; i < length; i++) {
+        if (proj[i] >= threshold && i - last >= min_dist) {
+            if (count < max_lines) {
+                lines[count++] = i;
+                last = i;
+            }
+        }
+    }
+    return count;
+}
+
+
+static void
+cut_grid_cells_gridlines(GdkPixbuf *grid_pixbuf)
+{
+    if (!grid_pixbuf) {
+        g_printerr("cut_grid_cells_gridlines: grid_pixbuf == NULL\n");
+        return;
+    }
+
+    GdkPixbuf *trimmed = trim_whitespace(grid_pixbuf);
+    int W = gdk_pixbuf_get_width(trimmed);
+    int H = gdk_pixbuf_get_height(trimmed);
+
+    int *h_proj = calculate_horizontal_projection(trimmed);
+    int *v_proj = calculate_vertical_projection(trimmed);
+
+    int h_lines[64];
+    int v_lines[64];
+
+    int n_h = grid_lines(h_proj, H,
+                                              5,
+                                              0.7,  
+                                              h_lines, 64);
+    int n_v = grid_lines(v_proj, W,
+                                              5,
+                                              0.7,
+                                              v_lines, 64);
+
+    if (n_h < 2 || n_v < 2) {
+        g_printerr("Not enough grid lines detected, aborting.\n");
+        g_free(h_proj);
+        g_free(v_proj);
+        g_object_unref(trimmed);
+        return;
+    }
+
+    int rows = n_h - 1;
+    int cols = n_v - 1;
+
+    mkdir("Cells");
+
+    int cell_count = 0;
+
+    for (int r = 0; r < rows; r++) {
+        int y0 = h_lines[r];
+        int y1 = h_lines[r + 1];
+
+        if (y1 - y0 <= 2)
+            continue;
+        y0 += 1;
+        y1 -= 1;
+
+        int CH = y1 - y0;
+        if (CH <= 0)
+            continue;
+
+        for (int c = 0; c < cols; c++) {
+            int x0 = v_lines[c];
+            int x1 = v_lines[c + 1];
+
+            if (x1 - x0 <= 2)
+                continue;
+            x0 += 1;
+            x1 -= 1;
+
+            int CW = x1 - x0;
+            if (CW <= 0)
+                continue;
+
+            GdkPixbuf *cell =
+                gdk_pixbuf_new_subpixbuf(trimmed,
+                                         x0, y0,
+                                         CW, CH);
+
+            char filename[256];
+            g_snprintf(filename, sizeof(filename),
+                       "Cells/cell_%02d_%02d.png", r, c);
+
+            GError *error = NULL;
+            gdk_pixbuf_save(cell, filename, "png", &error, NULL);
+
+            if (error) {
+                g_printerr("Save error %s: %s\n",
+                           filename, error->message);
+                g_error_free(error);
+            }
+
+            g_object_unref(cell);
+            cell_count++;
+        }
+    }
+
+    g_print("%d cells saved in ./Cells\n", cell_count);
+    g_free(h_proj);
+    g_free(v_proj);
+    g_object_unref(trimmed);
+}
+
+
+
 int main(int argc, char **argv) 
 {
     if (argc != 2) 
@@ -222,24 +351,29 @@ int main(int argc, char **argv)
 
     GdkPixbuf *list_area_pixbuf = NULL;
     int *list_h_proj = NULL;
+    GdkPixbuf *grid_pixbuf = NULL;
     
     if (empty_lines_left > empty_lines_right && empty_lines_left > 10) 
     { 
         list_area_pixbuf = crop_left;
         list_h_proj = h_proj_left;
-	gdk_pixbuf_save(crop_right, "grille.png","png",NULL,NULL);// SAUVEGARDE DE LA GRILLE CROP (reste les marges)
-								  
-        g_free(h_proj_right); 
-        g_object_unref(crop_right); 
+
+        grid_pixbuf = crop_right;
+        gdk_pixbuf_save(grid_pixbuf,
+                        "grille.png", "png", NULL, NULL); // SAUVEGARDE DE LA GRILLE CROP (reste les marges)
+
+        g_free(h_proj_right);
     } 
     else 
     {
         list_area_pixbuf = crop_right;
         list_h_proj = h_proj_right;
-	gdk_pixbuf_save(crop_left, "grilleleft.png","png",NULL,NULL);// SAUVEGARDE DE LA GRILLE CROP (reste les marges)
 
-        g_free(h_proj_left); 
-        g_object_unref(crop_left); 
+        grid_pixbuf = crop_left;
+        gdk_pixbuf_save(grid_pixbuf,
+                        "grilleleft.png", "png", NULL, NULL); // SAUVEGARDE DE LA GRILLE CROP (reste les marges)
+
+        g_free(h_proj_left);
     }
 
     // 5. Cutting words in list
@@ -288,9 +422,16 @@ int main(int argc, char **argv)
 
     // 7. Saving and free
     g_print("\nSaving image words...\n");
-    mkdir("Words", 0777); //save les mots dans le dossier
-    // MANQUE : couper les mots en lettres dans leur fichier
+    mkdir("Words"); //save les mots dans le dossier
     g_list_foreach(word_images, save_pixbuf, "Words/mot");
+    g_print("Cutting word list finished\n");
+    
+    if (grid_pixbuf != NULL) 
+    {
+        g_print("\nCutting grid cells...\n");
+        cut_grid_cells_gridlines(grid_pixbuf);
+        g_object_unref(grid_pixbuf);
+    }
 
     g_free(v_proj);
     g_free(list_h_proj);
@@ -298,6 +439,133 @@ int main(int argc, char **argv)
     g_object_unref(list_area_pixbuf); 
     g_object_unref(original_image); 
 
+    return 0;
+}
+int detect_cut_main(char *input_filename) 
+{
+    GError *error = NULL;
+    gtk_init(NULL, NULL);
+
+    // 1.loading
+    GdkPixbuf *original_image = gdk_pixbuf_new_from_file(input_filename, &error);
+    if (error) 
+    {
+        g_printerr("Image loading error %s: %s\n", input_filename, error->message);
+        g_error_free(error);
+        return 1;
+    }
+
+    // 2. vertical projection
+    int *v_proj = calculate_vertical_projection(original_image);
+
+    // 3. Finding gap
+    struct Gap split_gap = find_widest_gap(v_proj, gdk_pixbuf_get_width(original_image));
+    
+    if (split_gap.width == 0) 
+    {
+        g_printerr("No gap found\n");
+        g_object_unref(original_image);
+        g_free(v_proj);
+        return 1;
+    }
+
+    GdkPixbuf *crop_left = gdk_pixbuf_new_subpixbuf(original_image, 0, 0, split_gap.start, 
+                                                    gdk_pixbuf_get_height(original_image));
+                                                    
+    GdkPixbuf *crop_right = gdk_pixbuf_new_subpixbuf(original_image, split_gap.end, 0, 
+                                                     gdk_pixbuf_get_width(original_image) - split_gap.end, 
+                                                     gdk_pixbuf_get_height(original_image));
+
+    // 4. Identifying list of words
+    int *h_proj_left = calculate_horizontal_projection(crop_left);
+    int *h_proj_right = calculate_horizontal_projection(crop_right);
+    int empty_lines_left = count_empty_lines(h_proj_left, gdk_pixbuf_get_height(crop_left));
+    int empty_lines_right = count_empty_lines(h_proj_right, gdk_pixbuf_get_height(crop_right));
+
+    GdkPixbuf *list_area_pixbuf = NULL;
+    int *list_h_proj = NULL;
+    GdkPixbuf *grid_pixbuf = NULL;
+    
+    if (empty_lines_left > empty_lines_right && empty_lines_left > 10) 
+    { 
+        list_area_pixbuf = crop_left;
+        list_h_proj = h_proj_left;
+
+        grid_pixbuf = crop_right;
+        gdk_pixbuf_save(grid_pixbuf,
+                        "grille.png", "png", NULL, NULL); // SAUVEGARDE DE LA GRILLE CROP (reste les marges)
+
+        g_free(h_proj_right);
+    } 
+    else 
+    {
+        list_area_pixbuf = crop_right;
+        list_h_proj = h_proj_right;
+
+        grid_pixbuf = crop_left;
+        gdk_pixbuf_save(grid_pixbuf,
+                        "grilleleft.png", "png", NULL, NULL); // SAUVEGARDE DE LA GRILLE CROP (reste les marges)
+
+        g_free(h_proj_left);
+    }
+
+    // 5. Cutting words in list
+    GList *word_images = NULL;
+    int list_height = gdk_pixbuf_get_height(list_area_pixbuf);
+    int list_width = gdk_pixbuf_get_width(list_area_pixbuf);
+    int word_start_y = -1;
+
+    for (int y = 0; y < list_height; y++) 
+    {
+        gboolean is_text = (list_h_proj[y] >= PROJECTION_THRESHOLD);
+
+        if (is_text && word_start_y == -1)
+            word_start_y = y;
+	else if (!is_text && word_start_y != -1) 
+	{
+            int word_height = y - word_start_y;
+            if (word_height > 0) 
+	    {
+                GdkPixbuf *untrimmed_word = gdk_pixbuf_new_subpixbuf(list_area_pixbuf, 0, word_start_y, 
+                                                                    list_width, word_height);
+                // 6. Trim
+                GdkPixbuf *trimmed_word = trim_whitespace(untrimmed_word);
+                word_images = g_list_append(word_images, trimmed_word);
+                
+                g_object_unref(untrimmed_word); 
+            }
+            word_start_y = -1;
+        }
+    }
+    
+    if (word_start_y != -1) 
+    {
+        int word_height = list_height - word_start_y;
+        GdkPixbuf *untrimmed_word = gdk_pixbuf_new_subpixbuf(list_area_pixbuf, 0, word_start_y, 
+                                                             list_width, word_height);
+        GdkPixbuf *trimmed_word = trim_whitespace(untrimmed_word);
+        word_images = g_list_append(word_images, trimmed_word);
+        g_object_unref(untrimmed_word);
+    }
+
+    // 7. Saving and free
+    g_print("\nSaving image words...\n");
+    mkdir("Words"); //save les mots dans le dossier
+    g_list_foreach(word_images, save_pixbuf, "Words/mot");
     g_print("Cutting word list finished\n");
+    
+    if (grid_pixbuf != NULL) 
+    {
+        g_print("\nCutting grid cells...\n");
+        cut_grid_cells_gridlines(grid_pixbuf);
+        g_object_unref(grid_pixbuf);
+    }
+
+    g_free(v_proj);
+    g_free(list_h_proj);
+    g_list_free_full(word_images, g_object_unref); 
+    g_object_unref(list_area_pixbuf); 
+    g_object_unref(original_image); 
+
     return 0;
 }
