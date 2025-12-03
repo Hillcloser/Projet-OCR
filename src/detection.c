@@ -4,7 +4,6 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <math.h>
-#include "stb_image.h"
 #include "detection.h"
 
 

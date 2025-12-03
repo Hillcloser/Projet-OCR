@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
-
+#include "nn.h"
 
 // -1 <= random_d() <= 1
 double random_d()
