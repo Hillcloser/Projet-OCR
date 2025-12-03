@@ -15,16 +15,6 @@ static GridMap current_grid = {0};
 
 
 
-
-
-
-
-
-
-
-
-
-
 // Fonction appelée par le bouton "Sauvegarder"
 static void on_save_clicked(GtkWidget *widget, gpointer window)
 {
@@ -61,15 +51,6 @@ static void on_save_clicked(GtkWidget *widget, gpointer window)
 
     gtk_widget_destroy(dialog);
 }
-
-
-
-
-
-
-
-
-
 
 
 

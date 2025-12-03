@@ -147,8 +147,3 @@ void detect_and_cut(const char *path, int rows, int cols) //
     free(y_cord);
     printf("%d cells saved in ./cells\n", count);
 }
-int main()
-{
-    detect_and_cut("grid_test1.png", 12, 12);
-    return 0;
-}

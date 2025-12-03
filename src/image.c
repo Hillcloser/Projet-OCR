@@ -13,14 +13,6 @@
    OUTILS DE BASE
    ============================================================ */
 
-
-
-
-
-
-
-
-
 void save_pixbuf(GdkPixbuf *pixbuf, const char *filename)
 {
     GError *error = NULL;
@@ -32,19 +24,6 @@ void save_pixbuf(GdkPixbuf *pixbuf, const char *filename)
         printf("Image sauvegardée avec succès : %s\n", filename);
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 static inline guchar clamp_val(double v) {
     if (v < 0) return 0;

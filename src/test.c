@@ -12,7 +12,7 @@ int main()
 	//nn_main();
 	//nn_test();
 		
-	
+	//detect_and_cut("grid_test1.png", 12, 12);
 	
 	return 0;
 }
