@@ -4,13 +4,15 @@
 
 
 
-int solver (char * file, char * word)
+void solver (char * file, char * word, int res[4])
 {
+  if (file == NULL || word == NULL)
+      return exit(EXIT_FAILURE);
     FILE *fp = fopen(file, "r");
     if (fp == NULL)
   {
     printf("Le Fichier na pas put etre ouvert\n");
-      return EXIT_FAILURE;
+      return exit(EXIT_FAILURE);
   }
   int lignes = 0;
   int colonnes = 0;
@@ -239,7 +241,10 @@ int solver (char * file, char * word)
           {
             trouve = 1;
             printf("(%i,%i)(%i,%i)\n",first_pos_y,first_pos_x,new_j,new_i);
-            return 0;
+            res[0] = first_pos_y;
+            res[1] = first_pos_x;
+            res[2] = new_j;
+            res[3] = new_i;
           }
           
         }
@@ -248,9 +253,6 @@ int solver (char * file, char * word)
   if (trouve == 0)
   {
       printf("Not Found\n");
-      return 0;
   }
 }
-
-
 
