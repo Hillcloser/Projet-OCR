@@ -1,7 +1,7 @@
 CC := gcc
 CFLAGS := -Wall -Wextra -Iinclude -g `pkg-config --cflags --libs gtk+-3.0` -lm
 TARGET := build/ocr build/test
-SRC := src/detect_cut.c src/solver.c src/detection.c src/image.c src/nn.c
+SRC := src/detect_cut.c src/solver.c src/image.c src/nn.c
 
 .PHONY: all clean ocr test
 	

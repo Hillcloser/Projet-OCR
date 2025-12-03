@@ -24,25 +24,6 @@ void softmax(double *z, double *res)
 double softmax_B(double res, double y) //Backpropagation of softmax
 {return res - y;}
 
-
-struct NeuralNetwork
-{
-	int n; //hidden len
-	
-	double **input_w; // 26*n
-	double **output_w;// n*784
-	
-	double *hidden_b; 
-	double *hidden_z;
-	double *hidden_res;
-	
-	double *end_b;
-	double *end_z;
-	double *end_res; 
-	
-	double learning_rate;
-};
-
 struct NeuralNetwork init_NN(int n, double learning_rate)
 {
 	struct NeuralNetwork res;
