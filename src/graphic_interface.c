@@ -1,6 +1,5 @@
 #include <gtk/gtk.h>
 #include "image.h"
-#include "segmentation.h"
 
 
 static GtkWidget *image_widget = NULL;
@@ -74,7 +73,7 @@ static void on_save_clicked(GtkWidget *widget, gpointer window)
 
 
 
-
+/*
 static void on_segmentation(GtkWidget *widget, gpointer data)
 {
     // Important : Il faut que l'image soit déjà prétraitée (Noir et Blanc) !
@@ -96,6 +95,7 @@ static void on_segmentation(GtkWidget *widget, gpointer data)
 
     g_object_unref(visu);
 }
+*/
 
 /* ------------------- PRÉTRAITEMENT ------------------- */
 static void on_pretraitement(GtkWidget *widget, gpointer data)
@@ -212,7 +212,6 @@ int main(int argc, char *argv[])
     g_signal_connect(pre_button, "clicked", G_CALLBACK(on_pretraitement), NULL);
 
     // Vérifie que tu as bien cette ligne quelque part avant gtk_widget_show_all
-    g_signal_connect(detect_button, "clicked", G_CALLBACK(on_segmentation), NULL);
     g_signal_connect(save_button, "clicked", G_CALLBACK(on_save_clicked),window );
 
     // Masquage initial

@@ -4,13 +4,9 @@
 
 
 
-int main(int argc , char *argv[])
+int solver (char * file, char * word)
 {
-  if (argc != 3 )
-  {
-    return EXIT_FAILURE;
-  }
-    FILE *fp = fopen(argv[1], "r");
+    FILE *fp = fopen(file, "r");
     if (fp == NULL)
   {
     printf("Le Fichier na pas put etre ouvert\n");
@@ -20,7 +16,6 @@ int main(int argc , char *argv[])
   int colonnes = 0;
   char grille [100][100];
   char ligne[256];
-  char* word = argv[2];
   while ( fgets(ligne, sizeof(ligne), fp))
   {
     colonnes = 0;
@@ -252,7 +247,10 @@ int main(int argc , char *argv[])
   }
   if (trouve == 0)
   {
-      printf("Not Found");
+      printf("Not Found\n");
       return 0;
   }
 }
+
+
+
