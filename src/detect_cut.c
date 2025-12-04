@@ -295,7 +295,7 @@ cut_grid_cells_gridlines(GdkPixbuf *grid_pixbuf)
 }
 
 
-
+/*
 int main(int argc, char **argv) 
 {
     if (argc != 2) 
@@ -441,6 +441,10 @@ int main(int argc, char **argv)
 
     return 0;
 }
+*/
+
+
+
 int detect_cut_main(char *input_filename) 
 {
     GError *error = NULL;
@@ -569,3 +573,5 @@ int detect_cut_main(char *input_filename)
 
     return 0;
 }
+
+
