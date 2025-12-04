@@ -1,5 +1,13 @@
+
+#define _XOPEN_SOURCE 500 // Nécessaire pour nftw ou certaines fonctions POSIX
+#include <stdlib.h>
 #include <gtk/gtk.h>
+#include <dirent.h> // Pour lire les dossiers
+#include <sys/stat.h> // Pour vérifier si c'est un dossier ou un fichier
+#include <unistd.h> // Pour la fonction access() (POSIX)
+#include <string.h>
 #include "image.h"
+#include "detect_cut.h"
 
 
 static GtkWidget *image_widget = NULL;
@@ -11,7 +19,6 @@ static GtkWidget *detect_button = NULL;
 static GtkWidget *solve_button = NULL;
 
 
-static GridMap current_grid = {0};
 
 
 
@@ -52,7 +59,112 @@ static void on_save_clicked(GtkWidget *widget, gpointer window)
     gtk_widget_destroy(dialog);
 }
 
+int remove_directory(const char *path) {
+    DIR *d = opendir(path);
+    size_t path_len = strlen(path);
+    int r = -1;
 
+    if (d) {
+        struct dirent *p;
+        r = 0;
+        
+        // On lit chaque élément du dossier
+        while (!r && (p = readdir(d))) {
+            int r2 = -1;
+            char *buf;
+            size_t len;
+
+            // On ignore "." (dossier courant) et ".." (dossier parent)
+            if (!strcmp(p->d_name, ".") || !strcmp(p->d_name, "..")) {
+                continue;
+            }
+
+            len = path_len + strlen(p->d_name) + 2; 
+            buf = malloc(len);
+
+            if (buf) {
+                // On construit le chemin complet : "dossier/fichier"
+                snprintf(buf, len, "%s/%s", path, p->d_name);
+                
+                struct stat statbuf;
+                if (!stat(buf, &statbuf)) {
+                    if (S_ISDIR(statbuf.st_mode)) {
+                        // C'est un dossier -> APPEL RÉCURSIF
+                        r2 = remove_directory(buf);
+                    } else {
+                        // C'est un fichier -> ON LE SUPPRIME
+                        r2 = unlink(buf);
+                    }
+                }
+                free(buf);
+            }
+            r = r2;
+        }
+        closedir(d);
+    }
+
+    if (!r) {
+        // Le dossier est vide, on peut le supprimer
+        r = rmdir(path);
+    }
+
+    return r;
+}
+
+
+
+void on_decoup()
+{
+
+    if (!current_pixbuf) return;
+
+
+    const char *dossier = "Cells";
+    const char *dossier2 = "Words";
+
+
+    struct stat st;
+    if (stat(dossier, &st) == 0 && S_ISDIR(st.st_mode)) {
+        
+        printf("Suppression du dossier '%s' et de tout son contenu...\n", dossier);
+        
+        if (remove_directory(dossier) == 0) {
+            printf("Succès ! Dossier supprimé.\n");
+        } else {
+            perror("Erreur lors de la suppression");
+        }
+        
+    } else {
+        printf("Le dossier n'existe pas, rien à faire.\n");
+    }
+    struct stat st2;
+    if (stat(dossier2, &st2) == 0 && S_ISDIR(st2.st_mode)) {
+        
+        printf("Suppression du dossier '%s' et de tout son contenu...\n", dossier2);
+        
+        if (remove_directory(dossier2) == 0) {
+            printf("Succès ! Dossier supprimé.\n");
+        } else {
+            perror("Erreur lors de la suppression");
+        }
+        
+    } else {
+        printf("Le dossier n'existe pas, rien à faire.\n");
+    }
+
+
+    int err = detect_cut_main(current_pixbuf);
+    printf("Découpe en cours !\n");
+    if ( err)
+    {
+        printf("Découpe en ratée :( \n");
+    }
+    else
+    {
+        printf("Découpe en Reussie !\n");
+    }
+
+}
 
 /*
 static void on_segmentation(GtkWidget *widget, gpointer data)
@@ -194,6 +306,7 @@ int main(int argc, char *argv[])
 
     // Vérifie que tu as bien cette ligne quelque part avant gtk_widget_show_all
     g_signal_connect(save_button, "clicked", G_CALLBACK(on_save_clicked),window );
+    g_signal_connect(detect_button, "clicked", G_CALLBACK(on_decoup), NULL );
 
     // Masquage initial
     gtk_widget_hide(pre_button);

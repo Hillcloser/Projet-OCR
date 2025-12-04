@@ -120,12 +120,6 @@ void save_pixbuf(GdkPixbuf *pixbuf, const char *filename)
 
 
 
-// Tri simple pour trouver la médiane
-static int compare_ints(const void *a, const void *b) {
-    return (*(int*)a - *(int*)b);
-}
-
-
 
 
 

@@ -235,7 +235,7 @@ cut_grid_cells_gridlines(GdkPixbuf *grid_pixbuf)
     int rows = n_h - 1;
     int cols = n_v - 1;
 
-    mkdir("Cells");
+    mkdir("Cells",0777);
 
     int cell_count = 0;
 
@@ -445,16 +445,16 @@ int main(int argc, char **argv)
 
 
 
-int detect_cut_main(char *input_filename) 
+int detect_cut_main(GdkPixbuf * original_image) 
 {
     GError *error = NULL;
     gtk_init(NULL, NULL);
 
     // 1.loading
-    GdkPixbuf *original_image = gdk_pixbuf_new_from_file(input_filename, &error);
+    //GdkPixbuf *original_image = gdk_pixbuf_new_from_file(input_filename, &error);
     if (error) 
     {
-        g_printerr("Image loading error %s: %s\n", input_filename, error->message);
+        g_printerr("Image loading error %s: %s\n", "image erreur", error->message);
         g_error_free(error);
         return 1;
     }
@@ -554,7 +554,7 @@ int detect_cut_main(char *input_filename)
 
     // 7. Saving and free
     g_print("\nSaving image words...\n");
-    mkdir("Words"); //save les mots dans le dossier
+    mkdir("Words", 0777 ); //save les mots dans le dossier
     g_list_foreach(word_images, save_pixbuf, "Words/mot");
     g_print("Cutting word list finished\n");
     
