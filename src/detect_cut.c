@@ -64,40 +64,51 @@ static int* calculate_horizontal_projection(GdkPixbuf *pixbuf)
 
 static struct Gap find_widest_gap(int *projection, int length) 
 {
-    struct Gap best_gap = {0, 0, 0};
-    struct Gap current_gap = {0, 0, 0};
+    struct Gap best_gap    = (struct Gap){0, 0, 0};
+    struct Gap current_gap = (struct Gap){0, 0, 0};
     gboolean in_gap = FALSE;
 
     for (int i = 0; i < length; i++) 
     {
         if (projection[i] < PROJECTION_THRESHOLD) 
-	{
+        {
             if (!in_gap) 
-	    {
+            {
                 in_gap = TRUE;
                 current_gap.start = i;
                 current_gap.width = 0;
             }
             current_gap.width++;
         } 
-	else 
-	{
-            if (in_gap) 
-	    {
-                in_gap = FALSE;
-                current_gap.end = i;
-                if (current_gap.width > best_gap.width) 
-                    best_gap = current_gap;
+        else if (in_gap) 
+        {
+            in_gap = FALSE;
+            current_gap.end = i;
+
+            /* on ne garde que les gaps vraiment internes */
+            if (current_gap.width > best_gap.width &&
+                current_gap.start > 0 &&
+                current_gap.end   < length)
+            {
+                best_gap = current_gap;
             }
         }
     }
-    if (in_gap && current_gap.width > best_gap.width) 
+
+    /* cas où le gap va jusqu'à la fin */
+    if (in_gap) 
     {
         current_gap.end = length;
-        best_gap = current_gap;
+        if (current_gap.width > best_gap.width &&
+            current_gap.start > 0 &&
+            current_gap.end   < length)
+        {
+            best_gap = current_gap;
+        }
     }
     return best_gap;
 }
+
 
 static int count_empty_lines(int *h_projection, int height) 
 {
@@ -235,7 +246,7 @@ cut_grid_cells_gridlines(GdkPixbuf *grid_pixbuf)
     int rows = n_h - 1;
     int cols = n_v - 1;
 
-    mkdir("Cells",0777);
+    mkdir("Cells");
 
     int cell_count = 0;
 
@@ -295,7 +306,7 @@ cut_grid_cells_gridlines(GdkPixbuf *grid_pixbuf)
 }
 
 
-/*
+
 int main(int argc, char **argv) 
 {
     if (argc != 2) 
@@ -322,6 +333,19 @@ int main(int argc, char **argv)
 
     // 3. Finding gap
     struct Gap split_gap = find_widest_gap(v_proj, gdk_pixbuf_get_width(original_image));
+
+    int img_w = gdk_pixbuf_get_width(original_image);
+
+    if (split_gap.width == 0 ||
+        split_gap.start <= 0 ||
+        split_gap.end   >= img_w) 
+    {
+        g_printerr("No valid internal gap found\n");
+        g_object_unref(original_image);
+        g_free(v_proj);
+        return 1;
+    }
+
     
     if (split_gap.width == 0) 
     {
@@ -422,7 +446,7 @@ int main(int argc, char **argv)
 
     // 7. Saving and free
     g_print("\nSaving image words...\n");
-    mkdir("Words"); //save les mots dans le dossier
+    mkdir("Words", 0777); //save les mots dans le dossier
     g_list_foreach(word_images, save_pixbuf, "Words/mot");
     g_print("Cutting word list finished\n");
     
@@ -441,20 +465,16 @@ int main(int argc, char **argv)
 
     return 0;
 }
-*/
-
-
-
-int detect_cut_main(GdkPixbuf * original_image) 
+int detect_cut_main(char *input_filename) 
 {
     GError *error = NULL;
     gtk_init(NULL, NULL);
 
     // 1.loading
-    //GdkPixbuf *original_image = gdk_pixbuf_new_from_file(input_filename, &error);
+    GdkPixbuf *original_image = gdk_pixbuf_new_from_file(input_filename, &error);
     if (error) 
     {
-        g_printerr("Image loading error %s: %s\n", "image erreur", error->message);
+        g_printerr("Image loading error %s: %s\n", input_filename, error->message);
         g_error_free(error);
         return 1;
     }
@@ -554,7 +574,7 @@ int detect_cut_main(GdkPixbuf * original_image)
 
     // 7. Saving and free
     g_print("\nSaving image words...\n");
-    mkdir("Words", 0777 ); //save les mots dans le dossier
+    mkdir("Words",0777); //save les mots dans le dossier
     g_list_foreach(word_images, save_pixbuf, "Words/mot");
     g_print("Cutting word list finished\n");
     
@@ -573,5 +593,3 @@ int detect_cut_main(GdkPixbuf * original_image)
 
     return 0;
 }
-
-
