@@ -4,30 +4,18 @@
 #include <time.h>
 #include <stdint.h>
 #include <string.h>
-
-// --- HYPERPARAMETRES ---
 #define INPUT_NODES 784   // 28x28
 #define HIDDEN_NODES 128  // Assez large pour capturer les détails
 #define OUTPUT_NODES 26   // A-Z
 #define LEARNING_RATE 0.1 // Taux standard pour Sigmoide
-#define EPOCHS 5          // Suffisant pour atteindre >85%
+#define EPOCHS 5
 
-// --- STRUCTURE DU RESEAU ---
-// Utilisation de tableaux 1D pour la performance (Flat Arrays)
+// Définition de la structure (identique à celle dans ocr_engine.c)
 typedef struct {
-    double *w1; // Poids Input->Hidden [INPUT_NODES * HIDDEN_NODES]
-    double *b1; // Biais Hidden      [HIDDEN_NODES]
-    double *w2; // Poids Hidden->Out [HIDDEN_NODES * OUTPUT_NODES]
-    double *b2; // Biais Out         [OUTPUT_NODES]
-    
-    // Valeurs temporaires pour Backprop
-    double *hidden_input;  // z1
-    double *hidden_output; // a1 (Sigmoid)
-    double *final_input;   // z2
-    double *final_output;  // a2 (Softmax)
+    double *w1, *b1, *w2, *b2;
+    double *hidden_input, *hidden_output;
+    double *final_input, *final_output;
 } NeuralNet;
-
-// --- MATHS ---
 
 double sigmoid(double x) { return 1.0 / (1.0 + exp(-x)); }
 double sigmoid_prime(double x) { return x * (1.0 - x); } // x est déjà l'activation
@@ -38,6 +26,31 @@ double init_weight(int n_inputs) {
 }
 
 // --- GESTION MEMOIRE ---
+
+// Fonction pour grossir artificiellement les lettres (Dilatation)
+// Cela transforme une lettre fine EMNIST en lettre "grasse" style grille
+void augment_bold(double *input_img, double *output_img) {
+    // On copie d'abord
+    for(int i=0; i<784; i++) output_img[i] = input_img[i];
+
+    // On applique la dilatation : un pixel devient blanc si un de ses voisins est blanc
+    for (int y = 1; y < 27; y++) {
+        for (int x = 1; x < 27; x++) {
+            int idx = y * 28 + x;
+            
+            // Si un voisin est allumé, on allume le pixel central
+            // (C'est l'inverse de l'érosion qu'on a fait avant !)
+            if (input_img[(y-1)*28 + x] > 0.5 || 
+                input_img[(y+1)*28 + x] > 0.5 || 
+                input_img[y*28 + (x-1)] > 0.5 || 
+                input_img[y*28 + (x+1)] > 0.5) {
+                
+                output_img[idx] = 1.0; 
+            }
+        }
+    }
+}
+
 
 NeuralNet* create_network() {
     NeuralNet *net = malloc(sizeof(NeuralNet));
@@ -214,6 +227,11 @@ int main() {
     NeuralNet *net = create_network();
     double *input_buffer = malloc(INPUT_NODES * sizeof(double));
 
+    
+    
+
+   
+
     // 6. Boucle Entrainement
     printf("Debut de l'entrainement (%d Epoques)...\n", EPOCHS);
     
@@ -245,6 +263,7 @@ int main() {
             // Protection données corrompues
             if (target < 0 || target >= 26) continue;
 
+
             // Train
             train_step(net, input_buffer, target);
 
@@ -267,3 +286,6 @@ int main() {
     
     return 0;
 }
+
+
+

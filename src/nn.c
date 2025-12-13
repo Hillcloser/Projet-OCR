@@ -8,8 +8,8 @@
 double random_d()
 {return ((double)rand() / RAND_MAX) * 2 - 1;} 
 
-double sigmoid(double z)
-{return 1.0/(1.0 + exp(-z));}
+//double sigmoid(double z)
+//{return 1.0/(1.0 + exp(-z));}
 
 double sigmoid_prime(double z) //Backpropagation of sigmoid
 {return sigmoid(z)*(1-sigmoid(z));}

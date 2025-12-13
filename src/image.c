@@ -22,7 +22,35 @@ typedef struct { int x, y; } Point;
 
 
 
+void apply_gamma_correction(GdkPixbuf *pixbuf, double gamma) {
+    int w = gdk_pixbuf_get_width(pixbuf);
+    int h = gdk_pixbuf_get_height(pixbuf);
+    int rs = gdk_pixbuf_get_rowstride(pixbuf);
+    int ch = gdk_pixbuf_get_n_channels(pixbuf);
+    guchar *pixels = gdk_pixbuf_get_pixels(pixbuf);
 
+    // Pré-calcul de la table de correspondance (LUT) pour la vitesse
+    // On évite de faire pow() pour chaque pixel
+    unsigned char lut[256];
+    for (int i = 0; i < 256; i++) {
+        // Formule : 255 * (valeur / 255)^gamma
+        double val = pow(i / 255.0, gamma) * 255.0;
+        if (val > 255) val = 255;
+        lut[i] = (unsigned char)val;
+    }
+
+    for (int y = 0; y < h; y++) {
+        guchar *row = pixels + y * rs;
+        for (int x = 0; x < w; x++) {
+            // On applique la LUT sur chaque canal (R, G, B)
+            for (int c = 0; c < ch; c++) {
+                // Si c'est alpha (4ème canal), on touche pas
+                if (ch == 4 && c == 3) continue;
+                row[x * ch + c] = lut[row[x * ch + c]];
+            }
+        }
+    }
+}
 
 
 
@@ -129,6 +157,7 @@ static inline guchar clamp_val(double v) {
     return (guchar)v;
 }
 
+// Version améliorée : Prend le canal le plus sombre au lieu de la moyenne
 void grayscale_image(GdkPixbuf *pixbuf) {
     int w = gdk_pixbuf_get_width(pixbuf);
     int h = gdk_pixbuf_get_height(pixbuf);
@@ -142,12 +171,17 @@ void grayscale_image(GdkPixbuf *pixbuf) {
         guchar *row = pixels + y * rs;
         for (int x = 0; x < w; x++) {
             guchar *p = row + x * ch;
-            guchar g = (guchar)(0.299 * p[0] + 0.587 * p[1] + 0.114 * p[2]);
-            p[0] = p[1] = p[2] = g;
+            
+            // On cherche la valeur minimale (la plus sombre) parmi R, G, B
+            guchar min_val = p[0];
+            if (p[1] < min_val) min_val = p[1];
+            if (p[2] < min_val) min_val = p[2];
+            
+            // On affecte cette valeur sombre partout
+            p[0] = p[1] = p[2] = min_val;
         }
     }
 }
-
 void enhance_contrast(GdkPixbuf *pixbuf) {
     // Cette étape aide Hough à mieux voir les lignes de la grille
     int w = gdk_pixbuf_get_width(pixbuf);
@@ -220,18 +254,20 @@ void binarize_image_otsu(GdkPixbuf *pixbuf) {
             threshold = t;
         }
     }
-     
+    int bias = 20; 
+    threshold = (threshold + bias > 255) ? 255 : threshold + bias;
 
+    // Application du seuil
     for (int y = 0; y < h; y++) {
         guchar *row = pixels + y * rs;
         for (int x = 0; x < w; x++) {
             guchar *p = row + x * ch;
+            // Si < seuil -> Noir, sinon Blanc
             guchar val = (p[0] <= threshold) ? 0 : 255;
             p[0] = p[1] = p[2] = val;
         }
     }
 }
-
 /* ============================================================
    NOUVELLE DÉTECTION D'ANGLE : TRANSFORMÉE DE HOUGH
    ============================================================ */
@@ -365,15 +401,17 @@ GdkPixbuf *pretraitement_image(GdkPixbuf *src)
         rotated = gdk_pixbuf_copy(src);
     }
 
- 
+
    grayscale_image(rotated);
 
+   apply_gamma_correction(rotated, 1.2); 
 
-    enhance_contrast(rotated);
+    //enhance_contrast(rotated);
     binarize_image_otsu(rotated);
 
 
 
     remove_small_noise(rotated,20);
+
     return rotated;
 }

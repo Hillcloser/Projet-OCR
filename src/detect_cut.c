@@ -3,16 +3,67 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <dirent.h> // Nécessaire pour lire les dossiers
+#include <unistd.h> // Pour remove/unlink
 
 #define BACKGROUND_THRESHOLD 240
 #define PROJECTION_THRESHOLD 2
-
+static int word_save_counter = 0;
 struct Gap 
 {
     int start;
     int end;
     int width;
 };
+
+
+
+
+static void save_pixbuf(gpointer data, gpointer user_data) 
+{
+    // On n'utilise plus "static int i = 0;" ici !
+    GdkPixbuf *pixbuf = GDK_PIXBUF(data);
+    char *prefix = (char*)user_data;
+    GError *error = NULL;
+
+    char filename[256];
+    // On utilise word_save_counter qu'on incrémente
+    g_snprintf(filename, 256, "%s_%02d.png", prefix, word_save_counter++);
+    
+    gdk_pixbuf_save(pixbuf, filename, "png", &error, NULL);
+    
+    if (error) {
+        g_printerr("Save error: %s\n", error->message);
+        g_error_free(error);
+    }
+}
+
+static void clean_directory(const char *path) {
+    DIR *d = opendir(path);
+    size_t path_len = strlen(path);
+    struct dirent *p;
+
+    if (!d) return; // Le dossier n'existe pas encore, rien à faire
+
+    while ((p = readdir(d))) {
+        char *buf;
+        size_t len;
+
+        // On saute "." et ".." pour ne pas supprimer le dossier lui-même
+        if (!strcmp(p->d_name, ".") || !strcmp(p->d_name, ".."))
+            continue;
+
+        len = path_len + strlen(p->d_name) + 2; 
+        buf = malloc(len);
+
+        if (buf) {
+            snprintf(buf, len, "%s/%s", path, p->d_name);
+            remove(buf); // Supprime le fichier
+            free(buf);
+        }
+    }
+    closedir(d);
+}
 
 static gboolean is_background(guchar r, guchar g, guchar b)
 {
@@ -157,25 +208,6 @@ static GdkPixbuf* trim_whitespace(GdkPixbuf *pixbuf)
     return trimmed;
 }
 
-static void save_pixbuf(gpointer data, gpointer user_data) 
-{
-    static int i = 0;
-    GdkPixbuf *pixbuf = GDK_PIXBUF(data);
-    char *prefix = (char*)user_data;
-    GError *error = NULL;
-
-    char filename[256];
-    g_snprintf(filename, 256, "%s_%02d.png", prefix, i++);
-    gdk_pixbuf_save(pixbuf, filename, "png", &error, NULL);
-    
-    if (error) 
-    {
-        g_printerr("Save error %s: %s\n", filename, error->message);
-        g_error_free(error);
-    } 
-    else 
-        g_print("Save: %s\n", filename);
-}
 
 
 static int
@@ -246,7 +278,12 @@ cut_grid_cells_gridlines(GdkPixbuf *grid_pixbuf)
     int rows = n_h - 1;
     int cols = n_v - 1;
 
-    mkdir("Cells");
+    mkdir("Cells",0777);
+    FILE *f_info = fopen("Cells/grid_info.txt", "w");
+    if (f_info) {
+        fprintf(f_info, "%d %d", rows, cols); // Sauvegarde NbLignes NbColonnes
+        fclose(f_info);
+    }
 
     int cell_count = 0;
 
@@ -307,23 +344,15 @@ cut_grid_cells_gridlines(GdkPixbuf *grid_pixbuf)
 
 
 
-int main(int argc, char **argv) 
+int detect_cut_main(GdkPixbuf * original_image)
 {
-    if (argc != 2) 
-    {
-        g_printerr("Arguments error : Should have 1 argument");
-        return 1;
-    }
 
-    char *input_filename = argv[1];
     GError *error = NULL;
-    gtk_init(&argc, &argv);
 
     // 1.loading
-    GdkPixbuf *original_image = gdk_pixbuf_new_from_file(input_filename, &error);
     if (error) 
     {
-        g_printerr("Image loading error %s: %s\n", input_filename, error->message);
+        g_printerr("Image loading error %s: %s\n","image" , error->message);
         g_error_free(error);
         return 1;
     }
@@ -465,16 +494,17 @@ int main(int argc, char **argv)
 
     return 0;
 }
-int detect_cut_main(char *input_filename) 
+int detect_cut_main2(GdkPixbuf* original_image) 
 {
+    word_save_counter = 0;
+    clean_directory("Cells");
+    clean_directory("Words");
     GError *error = NULL;
-    gtk_init(NULL, NULL);
 
     // 1.loading
-    GdkPixbuf *original_image = gdk_pixbuf_new_from_file(input_filename, &error);
     if (error) 
     {
-        g_printerr("Image loading error %s: %s\n", input_filename, error->message);
+        g_printerr("Image loading error %s: %s\n", "Image", error->message);
         g_error_free(error);
         return 1;
     }
