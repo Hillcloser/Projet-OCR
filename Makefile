@@ -7,7 +7,7 @@ SRC := src/detect_cut.c src/solver.c src/image.c src/ocr.c
 	
 ocr: $(SRC) src/graphic_interface.c build
 	$(CC) -o build/ocr $(SRC) src/graphic_interface.c $(CFLAGS)
-	./build/ocr
+	cat README.md
 	
 test: $(SRC) src/test.c build
 	$(CC) -o build/test $(SRC) src/test.c $(CFLAGS)
